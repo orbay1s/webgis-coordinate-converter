@@ -16,6 +16,3 @@ Bu proje, harita mühendisleri ve CBS uzmanları için geliştirilmiş; tarayıc
 - **Proj4js:** İstemci taraflı koordinat projeksiyon kütüphanesi.
 - **Bootstrap 5:** Modern ve responsive arayüz.
 - **OpenStreetMap & Esri Satellite:** Altlık harita servisleri.
-
-## 🔗 Canlı Demo
-Projeyi incelemek için: [Buraya GitHub Pages Linkinizi Yapıştırın]
