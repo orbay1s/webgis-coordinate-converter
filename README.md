@@ -8,8 +8,6 @@
 
 > **🚀 Live Demo / Canlı Uygulama:** [https://orbay1s.github.io/webgis-coordinate-converter](https://orbay1s.github.io/webgis-coordinate-converter)
 
-[🇹🇷 Türkçe Açıklama için Aşağıya Kaydırın](#-türkçe)
-
 ---
 
 ## 🇬🇧 English
