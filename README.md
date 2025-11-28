@@ -40,7 +40,7 @@ cd webgis-coordinate-converter
 ---
 
 ## 🇹🇷 Türkçe
-**Coordinate Converter**, tarayıcı tabanlı ve istemci taraflı çalışan bir koordinat dönüşüm ve analiz aracıdır. Özellikle Türkiye'deki mekansal projelerde sıklıkla karşılaşılan **ED50 <-> ITRF96** datum dönüşüm sorunlarını çözmek için özel olarak tasarlanmıştır.
+**OpenGIS-TR Coordinate Converter**, tarayıcı tabanlı ve istemci taraflı çalışan bir koordinat dönüşüm ve analiz aracıdır. Özellikle Türkiye'deki mekansal projelerde sıklıkla karşılaşılan **ED50 <-> ITRF96** datum dönüşüm sorunlarını çözmek için özel olarak tasarlanmıştır.
 
 ### 🌟 Temel Özellikler
 * **Çoklu Sistem Desteği:** WGS84, ITRF96 (TM27-45) ve ED50 (TM27-45) sistemleri arasında anlık dönüşüm.
