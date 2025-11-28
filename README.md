@@ -32,9 +32,10 @@ This tool was conceptualized by an **Urban Planner** and built using **AI-Assist
 Since this is a static web app, no backend installation is required.
 
 ```bash
-git clone [https://github.com/orbay1s/webgis-coordinate-converter.git](https://github.com/orbay1s/webgis-coordinate-converter.git)
+git clone https://github.com/orbay1s/webgis-coordinate-converter.git
 cd webgis-coordinate-converter
 # Simply open index.html in your browser
+```
 
 ---
 
