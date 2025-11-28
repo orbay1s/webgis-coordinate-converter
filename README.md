@@ -4,7 +4,7 @@
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-blue.svg)
 ![Language](https://img.shields.io/badge/Language-HTML%20%7C%20JS-orange.svg)
 
-![App Screenshot](https://via.placeholder.com/800x400?text=Uygulama+Goruntusu+Buraya+Gelecek)
+![App Screenshot](ekran.png)
 
 > **🚀 Live Demo / Canlı Uygulama:** [https://orbay1s.github.io/webgis-coordinate-converter](https://orbay1s.github.io/webgis-coordinate-converter)
 
