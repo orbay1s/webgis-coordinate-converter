@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenGIS-TR | Coordinate Converter</title>
+    <title>OpenGIS-TR | Coordinate Converter V18</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,24 +14,20 @@
         body, html {
             height: 100%;
             margin: 0;
-            overflow: hidden; /* Prevent full page scroll */
+            overflow: hidden;
             background-color: #f8f9fa;
         }
         
-        /* Navbar height fixed */
-        .navbar {
-            height: 56px;
-            z-index: 1050;
-        }
-
-        /* Main Layout */
-        .main-container {
-            height: calc(100vh - 56px); /* Full height minus navbar */
-            display: flex;
-            flex-direction: row;
-        }
-
-        /* Sidebar Styling */
+        /* Layout Structure */
+        .navbar { height: 56px; z-index: 1050; }
+        .tab-bar { height: 42px; background: #fff; border-bottom: 1px solid #dee2e6; }
+        .main-content { height: calc(100vh - 98px); overflow: hidden; position: relative; }
+        
+        /* Tab Pane Full Height */
+        .tab-pane { height: 100%; width: 100%; }
+        
+        /* MAP MODE LAYOUT */
+        .map-mode-container { display: flex; height: 100%; }
         #sidebar {
             width: 350px;
             background-color: white;
@@ -42,8 +38,6 @@
             flex-direction: column;
             gap: 1rem;
         }
-
-        /* Map Container Styling - CRITICAL FIX FOR GRAY MAP */
         #map-wrapper {
             flex-grow: 1;
             position: relative;
@@ -51,501 +45,1007 @@
             height: 100%;
             width: 100%;
         }
-        
-        #map {
-            width: 100%;
+        #map { width: 100%; height: 100%; z-index: 1; }
+
+        /* BATCH MODE LAYOUT */
+        .batch-container {
+            padding: 1rem;
             height: 100%;
-            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background-color: #f0f2f5;
+            position: relative;
+        }
+        
+        .batch-controls {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* Custom Search Bar Overlay */
+        .batch-workspace {
+            display: flex;
+            gap: 1rem;
+            flex-grow: 1;
+            overflow: hidden; /* Lock main scroll */
+        }
+
+        .batch-input-col {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .batch-output-col {
+            flex-grow: 1;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            flex-grow: 1;
+            overflow: auto;
+        }
+
+        /* Shared Styles */
         #search-overlay {
-            position: absolute;
-            top: 10px;
-            left: 50px; /* Right of Zoom controls */
-            z-index: 1000;
-            width: 300px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 5px;
-            border-radius: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            position: absolute; top: 10px; left: 50px; z-index: 1000;
+            width: 300px; background: rgba(255,255,255,0.95);
+            padding: 5px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
-        /* Input Styling */
+        /* Toast Notification - FIXED POSITION TOP RIGHT */
+        #batch-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: opacity 0.3s ease-in-out;
+        }
+
         .border-source { border-color: #0d6efd !important; }
         .bg-source { background-color: #0d6efd !important; color: white; }
-        .text-source { color: #0d6efd !important; }
-
         .border-target { border-color: #fd7e14 !important; }
         .bg-target { background-color: #fd7e14 !important; color: white; }
-        .text-target { color: #fd7e14 !important; }
 
-        .result-box {
-            background-color: #f8f9fa;
-            font-weight: bold;
+        .result-box { background-color: #f8f9fa; font-weight: bold; font-family: monospace; }
+        
+        textarea.code-input {
             font-family: monospace;
-            font-size: 1rem;
-        }
-        
-        /* Custom Scrollbar */
-        #sidebar::-webkit-scrollbar { width: 6px; }
-        #sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
-        #sidebar::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
-
-        /* SVG Icon Classes */
-        .custom-div-icon {
-            background: transparent;
-            border: none;
-        }
-        .drop-shadow {
-            filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.4));
+            font-size: 0.85rem;
+            white-space: pre;
+            overflow-x: auto;
         }
 
-        /* Utilities */
-        .text-xs { font-size: 0.75rem; }
+        /* Expert Mode Styling */
+        .expert-btn {
+            display: none !important; /* Hidden by default */
+        }
+        body.expert-mode .expert-btn {
+            display: inline-block !important; /* Visible when body has expert-mode class */
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6c757d; }
         
-        /* Responsive adjustments */
+        /* Map Icons */
+        .custom-div-icon { background: transparent; border: none; }
+        .drop-shadow { filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.4)); }
+
         @media (max-width: 768px) {
-            .main-container { flex-direction: column; }
+            .map-mode-container { flex-direction: column; }
             #sidebar { width: 100%; height: 50%; border-right: none; border-bottom: 1px solid #dee2e6; }
             #map-wrapper { height: 50%; }
+            .batch-workspace { flex-direction: column; overflow-y: auto; }
+            .batch-input-col { width: 100%; }
         }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <nav class="navbar navbar-dark bg-dark px-3 shadow-sm">
-        <span class="navbar-brand mb-0 h1 d-flex align-items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
-            OpenGIS-TR <span class="fw-light text-white-50 ms-2" style="font-size: 0.9rem;">| Coordinate Converter</span>
-        </span>
+    <nav class="navbar navbar-dark bg-dark px-3 shadow-sm justify-content-between">
+        <div class="d-flex align-items-center">
+            <span class="navbar-brand mb-0 h1 d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+                OpenGIS-TR <span class="fw-light text-white-50 ms-2" style="font-size: 0.9rem;">| V18.0</span>
+            </span>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+             <div class="form-check form-switch text-white small m-0" title="Gelişmiş ayarları göster">
+                <input class="form-check-input" type="checkbox" id="expertModeToggle">
+                <label class="form-check-label" for="expertModeToggle">Uzman Modu</label>
+             </div>
+             <button class="btn btn-sm btn-outline-light rounded-circle" data-bs-toggle="modal" data-bs-target="#helpModal" title="Kullanım Kılavuzu">
+                ?
+             </button>
+        </div>
     </nav>
 
-    <!-- Main Layout -->
-    <div class="main-container">
+    <!-- Tab Navigation -->
+    <div class="tab-bar d-flex align-items-center px-3">
+        <ul class="nav nav-pills nav-fill" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active py-1 rounded-0" id="map-tab-btn" data-bs-toggle="pill" data-bs-target="#map-tab" type="button" role="tab" aria-selected="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                    Interactive Map (Single)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-1 rounded-0" id="batch-tab-btn" data-bs-toggle="pill" data-bs-target="#batch-tab" type="button" role="tab" aria-selected="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    Batch Processing (Bulk)
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="tab-content main-content" id="mainTabContent">
         
-        <!-- Sidebar -->
-        <div id="sidebar" class="p-3 shadow">
-            
-            <!-- Alert Box -->
-            <div id="alert-box" style="min-height: 40px;">
-                <!-- Alerts injected via JS -->
-            </div>
+        <!-- TAB 1: INTERACTIVE MAP -->
+        <div class="tab-pane fade show active" id="map-tab" role="tabpanel" aria-labelledby="map-tab-btn">
+            <div class="map-mode-container">
+                <!-- Sidebar -->
+                <div id="sidebar" class="p-3 shadow">
+                    <!-- Alert Box -->
+                    <div id="alert-box" style="min-height: 40px;"></div>
 
-            <!-- Source Input Card -->
-            <div class="card shadow-sm border-source">
-                <div class="card-header bg-source fw-bold d-flex justify-content-between align-items-center">
-                    <span class="small">INPUT (SOURCE)</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>
-                </div>
-                <div class="card-body p-2">
-                    <div class="mb-2">
-                        <select id="src-crs" class="form-select form-select-sm border-source fw-bold"></select>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="form-label text-muted text-xs mb-0">X / Easting / Lon</label>
-                            <input type="number" id="src-x" class="form-control form-control-sm" placeholder="0.00">
+                    <!-- Source Input Card -->
+                    <div class="card shadow-sm border-source">
+                        <div class="card-header bg-source fw-bold d-flex justify-content-between align-items-center">
+                            <span class="small">INPUT (SOURCE)</span>
+                            <button class="btn btn-sm btn-outline-light py-0 px-1 expert-btn" onclick="openParamModal('src')" title="Edit Parameters">Edit</button>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label text-muted text-xs mb-0">Y / Northing / Lat</label>
-                            <input type="number" id="src-y" class="form-control form-control-sm" placeholder="0.00">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Buttons -->
-            <div class="d-flex justify-content-between gap-2">
-                <button id="btn-zoom" class="btn btn-primary btn-sm flex-grow-1 fw-bold">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    ZOOM TO RESULT
-                </button>
-                <button id="btn-clear" class="btn btn-outline-danger btn-sm" title="Clear All">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
-                </button>
-            </div>
-
-            <!-- Target Output Card -->
-            <div class="card shadow-sm border-target">
-                <div class="card-header bg-target fw-bold d-flex justify-content-between align-items-center">
-                    <span class="small">OUTPUT (TARGET)</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>
-                </div>
-                <div class="card-body p-2">
-                    <div class="mb-2">
-                        <select id="tgt-crs" class="form-select form-select-sm border-target fw-bold"></select>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="form-label text-muted text-xs mb-0">Result X</label>
-                            <input type="text" id="res-x" class="form-control form-control-sm result-box" readonly placeholder="---">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label text-muted text-xs mb-0">Result Y</label>
-                            <input type="text" id="res-y" class="form-control form-control-sm result-box" readonly placeholder="---">
+                        <div class="card-body p-2">
+                            <div class="mb-2">
+                                <select id="src-crs" class="form-select form-select-sm border-source fw-bold"></select>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label text-muted text-xs mb-0">X / Easting / Lon</label>
+                                    <input type="number" id="src-x" class="form-control form-control-sm" placeholder="0.00">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted text-xs mb-0">Y / Northing / Lat</label>
+                                    <input type="number" id="src-y" class="form-control form-control-sm" placeholder="0.00">
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="mt-auto text-center text-muted small text-xs border-top pt-2">
-                Single File WebGIS &bull; No Build &bull; V9.0
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between gap-2">
+                        <button id="btn-zoom" class="btn btn-primary btn-sm flex-grow-1 fw-bold">ZOOM TO RESULT</button>
+                        <button id="btn-clear" class="btn btn-outline-danger btn-sm" title="Clear All">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Target Output Card -->
+                    <div class="card shadow-sm border-target">
+                        <div class="card-header bg-target fw-bold d-flex justify-content-between align-items-center">
+                            <span class="small">OUTPUT (TARGET)</span>
+                            <button class="btn btn-sm btn-outline-light py-0 px-1 expert-btn" onclick="openParamModal('tgt')" title="Edit Parameters">Edit</button>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="mb-2">
+                                <select id="tgt-crs" class="form-select form-select-sm border-target fw-bold"></select>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label text-muted text-xs mb-0">Result X</label>
+                                    <input type="text" id="res-x" class="form-control form-control-sm result-box" readonly placeholder="---">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted text-xs mb-0">Result Y</label>
+                                    <input type="text" id="res-y" class="form-control form-control-sm result-box" readonly placeholder="---">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Area -->
+                <div id="map-wrapper">
+                    <div id="search-overlay" style="width: 350px;">
+                        <form id="search-form" class="input-group input-group-sm">
+                            <input type="text" id="search-input" class="form-control border-primary" placeholder="Örn: Samsun Valiliği, Taksim Meydanı...">
+                            <button type="submit" class="btn btn-primary" id="search-btn">🔍</button>
+                        </form>
+                        <div id="search-error" class="text-danger small mt-1 fw-bold" style="display:none;">Location not found</div>
+                    </div>
+                    <div id="map"></div>
+                    <!-- Legend -->
+                    <div class="position-absolute bottom-0 end-0 m-3 p-2 bg-white rounded shadow border d-flex flex-column gap-1" style="z-index: 1000; font-size: 0.75rem;">
+                        <div class="d-flex align-items-center gap-2"><span class="d-inline-block border border-primary bg-primary bg-opacity-25 rounded-circle" style="width: 14px; height: 14px;"></span><strong>Source</strong></div>
+                        <div class="d-flex align-items-center gap-2"><span class="d-inline-block border border-danger bg-danger bg-opacity-25 rounded-circle" style="width: 14px; height: 14px;"></span><strong>Target</strong></div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Map Area -->
-        <div id="map-wrapper">
-            
-            <!-- Custom Search Overlay -->
-            <div id="search-overlay">
-                <form id="search-form" class="input-group input-group-sm">
-                    <input type="text" id="search-input" class="form-control border-primary" placeholder="Search address (Nominatim)...">
-                    <button type="submit" class="btn btn-primary" id="search-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    </button>
-                </form>
-                <div id="search-error" class="text-danger small mt-1 fw-bold" style="display:none;">Location not found</div>
+        <!-- TAB 2: BATCH PROCESSING -->
+        <div class="tab-pane fade" id="batch-tab" role="tabpanel" aria-labelledby="batch-tab-btn">
+            <div class="batch-container">
+                
+                <!-- Toast Alert (Using d-none for robust hiding) -->
+                <div id="batch-toast" class="alert d-flex align-items-center d-none" role="alert">
+                    <span id="batch-toast-icon" class="me-2 fs-5"></span>
+                    <div id="batch-toast-msg"></div>
+                </div>
+
+                <!-- Top Config Bar -->
+                <div class="batch-controls d-flex flex-wrap gap-3 align-items-end border-bottom pb-3">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label class="form-label small fw-bold text-primary mb-1">Batch Source CRS</label>
+                        <div class="input-group input-group-sm">
+                            <select id="batch-src-crs" class="form-select border-primary"></select>
+                            <button class="btn btn-outline-secondary expert-btn" onclick="openParamModal('batch-src')">⚙️</button>
+                        </div>
+                    </div>
+                    <div class="align-self-center text-muted">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <label class="form-label small fw-bold text-danger mb-1">Batch Target CRS</label>
+                        <div class="input-group input-group-sm">
+                            <select id="batch-tgt-crs" class="form-select border-danger"></select>
+                            <button class="btn btn-outline-secondary expert-btn" onclick="openParamModal('batch-tgt')">⚙️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Workspace -->
+                <div class="batch-workspace">
+                    
+                    <!-- Left: Input -->
+                    <div class="batch-input-col">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header small fw-bold bg-light">Input Data</div>
+                            <div class="card-body d-flex flex-column gap-2">
+                                <div class="mb-2">
+                                    <label class="form-label text-xs text-muted">File Upload (.txt, .csv, .ncn, .ncz, .kml, .kmz)</label>
+                                    <input class="form-control form-control-sm" type="file" id="file-upload" accept=".txt,.csv,.ncn,.ncz,.kml,.kmz">
+                                </div>
+                                <div class="flex-grow-1 d-flex flex-column">
+                                    <label class="form-label text-xs text-muted">Or Paste Text</label>
+                                    <textarea id="batch-input-text" class="form-control form-control-sm code-input flex-grow-1" placeholder="Buraya koordinat yapıştırın...
+Format 1: NoktaAdı  X  Y
+Format 2: X  Y
+(Örn: P1  500000  4500000)"></textarea>
+                                </div>
+                                <button id="btn-process" class="btn btn-success w-100 fw-bold shadow-sm">
+                                    PROCESS BATCH
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Output -->
+                    <div class="batch-output-col">
+                        <div class="card-header small fw-bold bg-light d-flex justify-content-between align-items-center py-2">
+                            <span>Results <span id="result-count" class="badge bg-secondary rounded-pill">0</span></span>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-dark" onclick="exportData('csv')">Download CSV</button>
+                                <button class="btn btn-outline-dark" onclick="exportData('kml')">Download KML</button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table table-sm table-striped table-hover mb-0 font-monospace small" style="font-size: 0.8rem;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Src X</th>
+                                        <th>Src Y</th>
+                                        <!-- DMS Visualization Columns -->
+                                        <th class="text-muted" style="border-left: 2px solid #dee2e6;">Lat (DMS)</th>
+                                        <th class="text-muted" style="border-right: 2px solid #dee2e6;">Lon (DMS)</th>
+                                        <th class="table-primary">Tgt X</th>
+                                        <th class="table-primary">Tgt Y</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batch-results-body">
+                                    <tr><td colspan="7" class="text-center text-muted py-4">No results yet. Upload file or paste data and click Process.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
             </div>
+        </div>
+    </div>
 
-            <!-- The Map -->
-            <div id="map"></div>
+    <!-- Parameter Editor Modal -->
+    <div class="modal fade" id="paramModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Projection Parameters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning small py-2">
+                        <span class="fw-bold">Dikkat:</span> Buradaki değişiklikler sadece bu oturum için geçerlidir. Yerel datum farklarını gidermek için <code>+towgs84</code> parametresini düzenleyebilirsiniz.
+                    </div>
+                    <p class="small text-muted mb-1">Modify the Proj4 string for <strong id="modal-crs-name"></strong>.</p>
+                    <textarea id="modal-proj4-string" class="form-control code-input" rows="4"></textarea>
+                    <input type="hidden" id="modal-crs-code">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="saveParameters()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <!-- Legend -->
-            <div class="position-absolute bottom-0 end-0 m-3 p-2 bg-white rounded shadow border d-flex flex-column gap-1" style="z-index: 1000; font-size: 0.75rem;">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="d-inline-block border border-primary bg-primary bg-opacity-25 rounded-circle" style="width: 14px; height: 14px;"></span>
-                  <strong>Input (Source)</strong>
+    <!-- User Guide Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Kullanım Kılavuzu & Yardım</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="d-inline-block border border-danger bg-danger bg-opacity-25 rounded-circle" style="width: 14px; height: 14px;"></span>
-                  <strong>Output (Target)</strong>
+                <div class="modal-body">
+                    <div class="accordion" id="helpAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#helpGeneral">
+                                    Genel Kullanım (Harita Modu)
+                                </button>
+                            </h2>
+                            <div id="helpGeneral" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <p>Bu mod, tekil nokta dönüşümleri için kullanılır.</p>
+                                    <ul>
+                                        <li><strong>Sol Panel (Input):</strong> Kaynak koordinat sistemini (CRS) seçin ve X/Y değerlerini girin.</li>
+                                        <li><strong>Sağ Panel (Output):</strong> Hedef CRS'yi seçin. Sonuç otomatik olarak hesaplanır.</li>
+                                        <li><strong>Harita Etkileşimi:</strong> Haritada herhangi bir yere tıklayarak koordinatları panele aktarabilirsiniz.</li>
+                                        <li><strong>Arama:</strong> "Örn: Taksim Meydanı" yazarak haritada konuma gidebilirsiniz.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpBatch">
+                                    Toplu İşlem (Batch Modu)
+                                </button>
+                            </h2>
+                            <div id="helpBatch" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <p>Çok sayıda noktayı aynı anda dönüştürmek için kullanılır.</p>
+                                    <ul>
+                                        <li><strong>Dosya Yükleme:</strong> .TXT, .CSV, .NCN, .NCZ, .KML veya .KMZ dosyalarını yükleyebilirsiniz. KML dosyaları yüklendiğinde kaynak sistem otomatik olarak WGS84'e ayarlanır.</li>
+                                        <li><strong>Metin Yapıştırma:</strong> Koordinatları doğrudan metin alanına yapıştırabilirsiniz. Format: <code>NoktaAdı X Y</code> veya sadece <code>X Y</code>.</li>
+                                        <li><strong>Dışa Aktarım:</strong> Sonuçları CSV (Excel) veya KML (Google Earth) formatında indirebilirsiniz.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-warning bg-opacity-10 text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#helpExpert">
+                                    Uzman Ayarları & Parametreler
+                                </button>
+                            </h2>
+                            <div id="helpExpert" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body small">
+                                    <p><strong>Uzman Modu:</strong> Sağ üst köşedeki anahtarı açarak, CRS listelerinin yanındaki ayar (dişli) ikonlarını görünür yapabilirsiniz.</p>
+                                    <p>Bu bölüm, standart dönüşüm parametrelerini (Proj4 String) değiştirmek içindir. Özellikle ED50-ITRF96 dönüşümlerinde yerel hassasiyeti artırmak için <code>+towgs84</code> değerlerini (X,Y,Z öteleme) buradan düzeltebilirsiniz.</p>
+                                    <p><i>Not: Varsayılan olarak Türkiye geneli için optimize edilmiş parametreler kullanılmaktadır.</i></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-             </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Anlaşıldı</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.10.0/proj4.js"></script>
+    <!-- JSZip for KMZ support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <!-- Application Logic -->
     <script>
-        // --- 1. DATA & CONSTANTS ---
-        const TR_LAT_MIN = 35.0;
-        const TR_LAT_MAX = 43.0;
-
-        const CRS_DEFINITIONS = [
-            // Global
+        // --- 1. DATA & STATE ---
+        const TR_LAT_MIN = 35.0, TR_LAT_MAX = 43.0;
+        
+        // Mutable definitions array
+        let CRS_DEFINITIONS = [
             { code: 'EPSG:4326', name: 'WGS 84 (Lat/Lon)', proj4: '+proj=longlat +datum=WGS84 +no_defs', bounds: [-180, -90, 180, 90] },
             { code: 'EPSG:3857', name: 'Web Mercator', proj4: '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', bounds: [-180, -85, 180, 85] },
-            // UTM 6 Degree
             { code: 'EPSG:32635', name: 'UTM Zone 35N (WGS84)', proj4: '+proj=utm +zone=35 +datum=WGS84 +units=m +no_defs', bounds: [24, TR_LAT_MIN, 30, TR_LAT_MAX] },
             { code: 'EPSG:32636', name: 'UTM Zone 36N (WGS84)', proj4: '+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs', bounds: [30, TR_LAT_MIN, 36, TR_LAT_MAX] },
             { code: 'EPSG:32637', name: 'UTM Zone 37N (WGS84)', proj4: '+proj=utm +zone=37 +datum=WGS84 +units=m +no_defs', bounds: [36, TR_LAT_MIN, 42, TR_LAT_MAX] },
             { code: 'EPSG:32638', name: 'UTM Zone 38N (WGS84)', proj4: '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs', bounds: [42, TR_LAT_MIN, 48, TR_LAT_MAX] },
-            // ITRF96 3 Degree
             { code: 'ITRF96:TM27', name: 'ITRF96 / TM27', proj4: '+proj=tmerc +lat_0=0 +lon_0=27 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [25.5, TR_LAT_MIN, 28.5, TR_LAT_MAX] },
             { code: 'ITRF96:TM30', name: 'ITRF96 / TM30', proj4: '+proj=tmerc +lat_0=0 +lon_0=30 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [28.5, TR_LAT_MIN, 31.5, TR_LAT_MAX] },
             { code: 'ITRF96:TM33', name: 'ITRF96 / TM33', proj4: '+proj=tmerc +lat_0=0 +lon_0=33 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [31.5, TR_LAT_MIN, 34.5, TR_LAT_MAX] },
             { code: 'ITRF96:TM36', name: 'ITRF96 / TM36', proj4: '+proj=tmerc +lat_0=0 +lon_0=36 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [34.5, TR_LAT_MIN, 37.5, TR_LAT_MAX] },
-            { code: 'ITRF96:TM39', name: 'ITRF96 / TM39', proj4: '+proj=tmerc +lat_0=0 +lon_0=39 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [37.5, TR_LAT_MIN, 40.5, TR_LAT_MAX] },
-            { code: 'ITRF96:TM42', name: 'ITRF96 / TM42', proj4: '+proj=tmerc +lat_0=0 +lon_0=42 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [40.5, TR_LAT_MIN, 43.5, TR_LAT_MAX] },
-            { code: 'ITRF96:TM45', name: 'ITRF96 / TM45', proj4: '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs', bounds: [43.5, TR_LAT_MIN, 46.5, TR_LAT_MAX] },
-            // ED50 3 Degree
-            { code: 'ED50:TM27', name: 'ED50 / TM27', proj4: '+proj=tmerc +lat_0=0 +lon_0=27 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [25.5, TR_LAT_MIN, 28.5, TR_LAT_MAX] },
-            { code: 'ED50:TM30', name: 'ED50 / TM30', proj4: '+proj=tmerc +lat_0=0 +lon_0=30 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [28.5, TR_LAT_MIN, 31.5, TR_LAT_MAX] },
-            { code: 'ED50:TM33', name: 'ED50 / TM33', proj4: '+proj=tmerc +lat_0=0 +lon_0=33 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [31.5, TR_LAT_MIN, 34.5, TR_LAT_MAX] },
-            { code: 'ED50:TM36', name: 'ED50 / TM36', proj4: '+proj=tmerc +lat_0=0 +lon_0=36 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [34.5, TR_LAT_MIN, 37.5, TR_LAT_MAX] },
-            { code: 'ED50:TM39', name: 'ED50 / TM39', proj4: '+proj=tmerc +lat_0=0 +lon_0=39 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [37.5, TR_LAT_MIN, 40.5, TR_LAT_MAX] },
-            { code: 'ED50:TM42', name: 'ED50 / TM42', proj4: '+proj=tmerc +lat_0=0 +lon_0=42 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [40.5, TR_LAT_MIN, 43.5, TR_LAT_MAX] },
-            { code: 'ED50:TM45', name: 'ED50 / TM45', proj4: '+proj=tmerc +lat_0=0 +lon_0=45 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs', bounds: [43.5, TR_LAT_MIN, 46.5, TR_LAT_MAX] },
+            // V17.0 UPDATE: Using Turkey General Params (-84, -107, -120) instead of Generic European (-87, -98, -121)
+            { code: 'ED50:TM30', name: 'ED50 / TM30', proj4: '+proj=tmerc +lat_0=0 +lon_0=30 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-84,-107,-120,0,0,0,0 +units=m +no_defs', bounds: [28.5, TR_LAT_MIN, 31.5, TR_LAT_MAX] },
+            { code: 'ED50:TM33', name: 'ED50 / TM33', proj4: '+proj=tmerc +lat_0=0 +lon_0=33 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-84,-107,-120,0,0,0,0 +units=m +no_defs', bounds: [31.5, TR_LAT_MIN, 34.5, TR_LAT_MAX] },
+            { code: 'ED50:TM36', name: 'ED50 / TM36', proj4: '+proj=tmerc +lat_0=0 +lon_0=36 +k=1 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-84,-107,-120,0,0,0,0 +units=m +no_defs', bounds: [34.5, TR_LAT_MIN, 37.5, TR_LAT_MAX] }
         ];
 
-        // Register Proj4 Definitions
-        CRS_DEFINITIONS.forEach(def => {
-            proj4.defs(def.code, def.proj4);
-        });
-
-        // --- 2. GLOBAL STATE ---
-        let map;
-        let sourceRect = null, targetRect = null;
-        let sourceMarker, targetMarker;
-        let srcCode = 'ITRF96:TM30';
-        let tgtCode = 'ITRF96:TM33';
+        let map, sourceRect, targetRect, sourceMarker, targetMarker;
+        let activeModalCrsCode = null;
         
-        // --- 3. UI INITIALIZATION ---
+        // V13 GLOBAL STATE
+        let GLOBAL_BATCH_DATA = []; // Stores raw input: { id, x, y, isKML }
+        let PROCESSED_BATCH_DATA = []; // Stores transformed output for export
+
+        // --- 2. INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Populate Selects
-            const srcSelect = document.getElementById('src-crs');
-            const tgtSelect = document.getElementById('tgt-crs');
-
-            CRS_DEFINITIONS.forEach(crs => {
-                const optSrc = new Option(crs.name, crs.code);
-                const optTgt = new Option(crs.name, crs.code);
-                srcSelect.add(optSrc);
-                tgtSelect.add(optTgt);
-            });
-
-            // Set Defaults
-            srcSelect.value = srcCode;
-            tgtSelect.value = tgtCode;
-
-            // Init Map
+            initDefs();
+            populateSelects();
             initMap();
+            
+            // Initial Map State
             updateMapZones();
-
-            // Event Listeners
-            srcSelect.addEventListener('change', (e) => { srcCode = e.target.value; updateMapZones(); calculate(); });
-            tgtSelect.addEventListener('change', (e) => { tgtCode = e.target.value; updateMapZones(); calculate(); });
+            
+            // Map Event Listeners
+            document.getElementById('src-crs').addEventListener('change', () => { updateMapZones(); calculate(); });
+            document.getElementById('tgt-crs').addEventListener('change', () => { updateMapZones(); calculate(); });
             document.getElementById('src-x').addEventListener('input', calculate);
             document.getElementById('src-y').addEventListener('input', calculate);
-            
-            document.getElementById('btn-clear').addEventListener('click', clearAll);
+            document.getElementById('btn-clear').addEventListener('click', clearMap);
             document.getElementById('btn-zoom').addEventListener('click', zoomToResult);
-
-            // Search Form
             document.getElementById('search-form').addEventListener('submit', handleSearch);
+
+            // Batch Event Listeners
+            document.getElementById('file-upload').addEventListener('change', handleFileSelect);
+            
+            // V16: Paste listener for auto-calculation
+            document.getElementById('batch-input-text').addEventListener('paste', (e) => {
+                // Wait for value to update
+                setTimeout(() => {
+                    handleInputParse();
+                }, 50);
+            });
+
+            // Manual Trigger
+            document.getElementById('btn-process').addEventListener('click', () => {
+                handleInputParse();
+            });
+
+            // REACTIVE LISTENERS (Fix V15): Ensure both dropdowns trigger recalculation
+            document.getElementById('batch-src-crs').addEventListener('change', recalculateBatch);
+            document.getElementById('batch-tgt-crs').addEventListener('change', recalculateBatch);
+            
+            // Tab Fix: Resize Map on Tab Switch
+            const mapTabEl = document.getElementById('map-tab-btn');
+            mapTabEl.addEventListener('shown.bs.tab', () => {
+                setTimeout(() => { map.invalidateSize(); }, 10);
+            });
+
+            // EXPERT MODE TOGGLE (V18)
+            document.getElementById('expertModeToggle').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    document.body.classList.add('expert-mode');
+                } else {
+                    document.body.classList.remove('expert-mode');
+                }
+            });
         });
 
-        // --- 4. MAP LOGIC ---
+        function initDefs() {
+            CRS_DEFINITIONS.forEach(def => proj4.defs(def.code, def.proj4));
+        }
+
+        function populateSelects() {
+            const ids = ['src-crs', 'tgt-crs', 'batch-src-crs', 'batch-tgt-crs'];
+            const currentVals = {};
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el.value) currentVals[id] = el.value;
+            });
+
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                el.innerHTML = '';
+                CRS_DEFINITIONS.forEach(crs => {
+                    el.add(new Option(crs.name, crs.code));
+                });
+                if (currentVals[id]) el.value = currentVals[id];
+                else {
+                    if (id.includes('src')) el.value = 'ITRF96:TM30';
+                    else el.value = 'ITRF96:TM33';
+                }
+            });
+        }
+
+        // V16: Enhanced Toast to support types (success/error)
+        function showToast(message, type = 'success') {
+            const toastEl = document.getElementById('batch-toast');
+            const msgEl = document.getElementById('batch-toast-msg');
+            const iconEl = document.getElementById('batch-toast-icon');
+
+            // Reset classes
+            toastEl.classList.remove('alert-success', 'alert-danger');
+
+            if (type === 'error') {
+                toastEl.classList.add('alert-danger');
+                iconEl.innerHTML = '⚠️';
+            } else {
+                toastEl.classList.add('alert-success');
+                iconEl.innerHTML = '✅';
+            }
+
+            msgEl.innerText = message;
+            toastEl.classList.remove('d-none');
+            setTimeout(() => { toastEl.classList.add('d-none'); }, 4000);
+        }
+
+        // --- 3. MAP LOGIC ---
         function initMap() {
-            // Initialize Leaflet Map
             map = L.map('map', { zoomControl: false }).setView([39.0, 35.0], 6);
             L.control.zoom({ position: 'topleft' }).addTo(map);
 
-            // Base Layers
-            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19, attribution: '© OpenStreetMap'
-            }).addTo(map);
-            
-            const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19, attribution: '© Esri'
-            });
-
+            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: 'OSM' }).addTo(map);
+            const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri' });
             L.control.layers({ "Street": osm, "Satellite": sat }, null, { position: 'topright' }).addTo(map);
 
-            // SVG Icons for Markers
-            const blueIcon = L.divIcon({
+            const createIcon = (color) => L.divIcon({
                 className: 'custom-div-icon',
-                html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0d6efd" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-100 h-100 drop-shadow"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
+                html: `<svg viewBox="0 0 24 24" fill="${color}" stroke="#fff" stroke-width="2" class="w-100 h-100 drop-shadow"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
                 iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
             });
 
-            const redIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#dc3545" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-100 h-100 drop-shadow"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
-                iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
-            });
+            sourceMarker = L.marker([0,0], { icon: createIcon('#0d6efd'), opacity: 0 }).addTo(map).bindPopup("Source");
+            targetMarker = L.marker([0,0], { icon: createIcon('#dc3545'), opacity: 0 }).addTo(map).bindPopup("Target");
 
-            // Markers
-            sourceMarker = L.marker([0,0], { icon: blueIcon, opacity: 0 }).addTo(map).bindPopup("Source (Input)");
-            targetMarker = L.marker([0,0], { icon: redIcon, opacity: 0 }).addTo(map).bindPopup("Target (Result)");
-
-            // Map Click -> Inverse Calculation
             map.on('click', (e) => {
-                const wgsLat = e.latlng.lat;
-                const wgsLon = e.latlng.lng;
-                
-                // WGS84 -> Source CRS
-                let sourcePt;
+                const srcCode = document.getElementById('src-crs').value;
                 try {
-                   sourcePt = proj4('EPSG:4326', srcCode, [wgsLon, wgsLat]);
-                } catch(err) {
-                   console.error("Proj4 Error:", err);
-                   return;
-                }
-                
-                // Update Inputs
-                const decimals = srcCode === 'EPSG:4326' ? 7 : 3;
-                document.getElementById('src-x').value = sourcePt[0].toFixed(decimals);
-                document.getElementById('src-y').value = sourcePt[1].toFixed(decimals);
-                
-                calculate();
+                    const pt = proj4('EPSG:4326', srcCode, [e.latlng.lng, e.latlng.lat]);
+                    const decimals = srcCode === 'EPSG:4326' ? 7 : 3;
+                    document.getElementById('src-x').value = pt[0].toFixed(decimals);
+                    document.getElementById('src-y').value = pt[1].toFixed(decimals);
+                    calculate();
+                } catch(err) { console.error(err); }
             });
         }
 
         function updateMapZones() {
-            // Remove old rects
+            const srcCode = document.getElementById('src-crs').value;
+            const tgtCode = document.getElementById('tgt-crs').value;
+            
             if (sourceRect) map.removeLayer(sourceRect);
             if (targetRect) map.removeLayer(targetRect);
 
-            // Draw Source Zone (Blue)
             const srcDef = CRS_DEFINITIONS.find(c => c.code === srcCode);
             if (srcDef && srcDef.bounds) {
-                const [minLon, minLat, maxLon, maxLat] = srcDef.bounds;
-                sourceRect = L.rectangle([[minLat, minLon], [maxLat, maxLon]], {
-                    color: '#0d6efd', weight: 1, fillColor: '#0d6efd', fillOpacity: 0.1, dashArray: '5,5', interactive: false
-                }).addTo(map);
+                sourceRect = L.rectangle([[srcDef.bounds[1], srcDef.bounds[0]], [srcDef.bounds[3], srcDef.bounds[2]]], 
+                { color: '#0d6efd', weight: 1, fillOpacity: 0.1, dashArray: '5,5', interactive: false }).addTo(map);
             }
 
-            // Draw Target Zone (Orange)
             const tgtDef = CRS_DEFINITIONS.find(c => c.code === tgtCode);
             if (tgtDef && tgtDef.bounds) {
-                const [minLon, minLat, maxLon, maxLat] = tgtDef.bounds;
-                targetRect = L.rectangle([[minLat, minLon], [maxLat, maxLon]], {
-                    color: '#fd7e14', weight: 1, fillColor: '#fd7e14', fillOpacity: 0.15, interactive: false
-                }).addTo(map);
+                targetRect = L.rectangle([[tgtDef.bounds[1], tgtDef.bounds[0]], [tgtDef.bounds[3], tgtDef.bounds[2]]], 
+                { color: '#fd7e14', weight: 1, fillOpacity: 0.15, interactive: false }).addTo(map);
             }
         }
 
-        // --- 5. CALCULATION & VALIDATION ---
         function calculate() {
-            const xStr = document.getElementById('src-x').value;
-            const yStr = document.getElementById('src-y').value;
+            const xVal = document.getElementById('src-x').value;
+            const yVal = document.getElementById('src-y').value;
+            const srcCode = document.getElementById('src-crs').value;
+            const tgtCode = document.getElementById('tgt-crs').value;
             const alertBox = document.getElementById('alert-box');
-            const resX = document.getElementById('res-x');
-            const resY = document.getElementById('res-y');
-
-            alertBox.innerHTML = ''; // Reset alerts
-
-            if (xStr === '' || yStr === '') {
-                sourceMarker.setOpacity(0);
-                targetMarker.setOpacity(0);
-                resX.value = '';
-                resY.value = '';
+            
+            alertBox.innerHTML = '';
+            
+            if (!xVal || !yVal) {
+                sourceMarker.setOpacity(0); targetMarker.setOpacity(0);
+                document.getElementById('res-x').value = ''; document.getElementById('res-y').value = '';
                 return;
             }
 
-            const x = parseFloat(xStr);
-            const y = parseFloat(yStr);
-
-            if (isNaN(x) || isNaN(y)) return;
-
-            // 1. Project Source -> WGS84 (for Marker and Validation)
-            let wgsInput;
+            const x = parseFloat(xVal), y = parseFloat(yVal);
             try {
-                wgsInput = proj4(srcCode, 'EPSG:4326', [x, y]);
-            } catch (e) { console.error(e); return; }
+                const wgsInput = proj4(srcCode, 'EPSG:4326', [x, y]);
+                sourceMarker.setLatLng([wgsInput[1], wgsInput[0]]).setOpacity(1);
 
-            // Update Blue Marker
-            sourceMarker.setLatLng([wgsInput[1], wgsInput[0]]).setOpacity(1);
+                const res = proj4(srcCode, tgtCode, [x, y]);
+                const decimals = tgtCode === 'EPSG:4326' ? 7 : 3;
+                document.getElementById('res-x').value = res[0].toFixed(decimals);
+                document.getElementById('res-y').value = res[1].toFixed(decimals);
 
-            // 2. Project Source -> Target (Calculation)
-            let targetResult;
-            try {
-                targetResult = proj4(srcCode, tgtCode, [x, y]);
-            } catch (e) { 
-                resX.value = "Error"; resY.value = "Error"; return; 
-            }
+                const wgsOutput = proj4(tgtCode, 'EPSG:4326', res);
+                targetMarker.setLatLng([wgsOutput[1], wgsOutput[0]]).setOpacity(1);
 
-            // Update Result Inputs
-            const decimals = tgtCode === 'EPSG:4326' ? 7 : 3;
-            resX.value = targetResult[0].toFixed(decimals);
-            resY.value = targetResult[1].toFixed(decimals);
-
-            // 3. Project Target -> WGS84 (for Red Marker and Cross-Zone check)
-            let wgsOutput;
-            try {
-                wgsOutput = proj4(tgtCode, 'EPSG:4326', targetResult);
-            } catch (e) { return; }
-
-            // Update Red Marker
-            targetMarker.setLatLng([wgsOutput[1], wgsOutput[0]]).setOpacity(1);
-
-            // --- VALIDATION HIERARCHY ---
-            const srcDef = CRS_DEFINITIONS.find(c => c.code === srcCode);
-            const tgtDef = CRS_DEFINITIONS.find(c => c.code === tgtCode);
-
-            const isSourceValid = checkBounds(wgsInput, srcDef.bounds);
-            const isTargetValid = checkBounds(wgsOutput, tgtDef.bounds);
-
-            if (!isSourceValid) {
-                alertBox.innerHTML = `<div class="alert alert-danger p-2 small fw-bold d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg> Source Coordinates Outside Zone</div>`;
-            } else if (!isTargetValid) {
-                alertBox.innerHTML = `<div class="alert alert-warning p-2 small fw-bold text-dark d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-circle-fill me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg> Result Outside Target Zone</div>`;
-            } else {
-                alertBox.innerHTML = `<div class="alert alert-success p-2 small fw-bold d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Valid Transformation</div>`;
-            }
+                const srcDef = CRS_DEFINITIONS.find(c => c.code === srcCode);
+                const tgtDef = CRS_DEFINITIONS.find(c => c.code === tgtCode);
+                
+                const check = (pt, bounds) => bounds ? (pt[0]>=bounds[0] && pt[0]<=bounds[2] && pt[1]>=bounds[1] && pt[1]<=bounds[3]) : true;
+                
+                if (!check(wgsInput, srcDef.bounds)) alertBox.innerHTML = `<div class="alert alert-danger py-1 px-2 small mb-0">Input outside Source Zone</div>`;
+                else if (!check(wgsOutput, tgtDef.bounds)) alertBox.innerHTML = `<div class="alert alert-warning py-1 px-2 small mb-0">Result outside Target Zone</div>`;
+            } catch (e) { console.error(e); }
         }
 
-        function checkBounds(pt, bounds) {
-            if (!bounds) return true;
-            const [lon, lat] = pt; // Proj4 returns [x, y] -> [lon, lat]
-            const [minLon, minLat, maxLon, maxLat] = bounds;
-            // Strict check
-            return (lon >= minLon && lon <= maxLon && lat >= minLat && lat <= maxLat);
-        }
-
-        // --- 6. UTILITIES ---
-        function clearAll() {
-            document.getElementById('src-x').value = '';
-            document.getElementById('src-y').value = '';
-            document.getElementById('res-x').value = '';
-            document.getElementById('res-y').value = '';
+        function clearMap() {
+            document.getElementById('src-x').value = ''; document.getElementById('src-y').value = '';
+            document.getElementById('res-x').value = ''; document.getElementById('res-y').value = '';
             document.getElementById('alert-box').innerHTML = '';
-            document.getElementById('search-input').value = '';
-            document.getElementById('search-error').style.display = 'none';
-            sourceMarker.setOpacity(0);
-            targetMarker.setOpacity(0);
+            sourceMarker.setOpacity(0); targetMarker.setOpacity(0);
         }
 
         function zoomToResult() {
             const group = L.featureGroup();
             if (sourceMarker.options.opacity > 0) group.addLayer(sourceMarker);
             if (targetMarker.options.opacity > 0) group.addLayer(targetMarker);
-            
-            if (group.getLayers().length > 0) {
-                map.flyToBounds(group.getBounds(), { padding: [50, 50], maxZoom: 15, duration: 1 });
+            if (group.getLayers().length > 0) map.flyToBounds(group.getBounds(), { padding: [50,50], maxZoom: 15 });
+        }
+
+        // --- 4. REACTIVE BATCH PROCESSING ---
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            const isKML = fileName.endsWith('.kml');
+            const isKMZ = fileName.endsWith('.kmz');
+            const isNCZ = fileName.endsWith('.ncz');
+
+            // Logic to process after reading text
+            const onTextReady = (text) => {
+                // Helper to check for binary content in a text file
+                if (isNCZ && /[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 100))) {
+                     showToast("HATA: Bu NCZ dosyası Binary formatta. Lütfen NetCAD'den '.ncn' (Nokta Dosyası) olarak kaydedin.", "error");
+                     return;
+                }
+
+                document.getElementById('batch-input-text').value = text;
+                
+                // 1. Auto-Detect CRS
+                if (isKML || isKMZ) {
+                    document.getElementById('batch-src-crs').value = 'EPSG:4326';
+                    showToast("KML detected: Auto-switched to WGS84");
+                }
+
+                // 2. Parse & Process
+                handleInputParse();
+            };
+
+            // Read File
+            if (isKMZ || isNCZ) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    JSZip.loadAsync(ev.target.result).then(function(zip) {
+                        if (isKMZ) {
+                             const kmlFile = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.kml'));
+                             if (kmlFile) kmlFile.async("string").then(onTextReady);
+                             else showToast("Invalid KMZ: No KML file found.", "error");
+                        } else {
+                            // NCZ: Try to find .ncn inside
+                             const ncnFile = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.ncn'));
+                             if (ncnFile) {
+                                 ncnFile.async("string").then(onTextReady);
+                             } else {
+                                 showToast("NCZ içinde okunabilir .ncn dosyası bulunamadı.", "error");
+                             }
+                        }
+                    }).catch(err => {
+                        // Not a valid zip file.
+                        if (isNCZ) {
+                            // Try reading as text (in case it was just a renamed .ncn file)
+                            const textReader = new FileReader();
+                            textReader.onload = (ev) => onTextReady(ev.target.result);
+                            textReader.readAsText(file);
+                        } else {
+                            showToast("Dosya okunamadı (Arşiv hatası).", "error");
+                        }
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = (ev) => onTextReady(ev.target.result);
+                reader.readAsText(file);
             }
         }
 
-        // --- 7. CUSTOM SEARCH (Nominatim) ---
+        // V16: Unified Logic with Error Handling
+        function handleInputParse() {
+            const rawText = document.getElementById('batch-input-text').value;
+            
+            // If empty, do nothing (don't clear existing if not intended)
+            if (!rawText.trim()) return;
+
+            // V16: Parse into a temporary array first
+            let tempData = [];
+
+            if (rawText.includes('<kml') && rawText.includes('<coordinates>')) {
+                tempData = parseKML(rawText);
+            } else {
+                tempData = parseTextOrNCN(rawText);
+            }
+
+            // V16: Logic Check
+            if (tempData.length === 0) {
+                showToast("Error: No valid coordinates found. Check format (Name X Y or X Y).", "error");
+                // Do NOT update GLOBAL_BATCH_DATA, preserve old state
+            } else {
+                GLOBAL_BATCH_DATA = tempData;
+                recalculateBatch();
+                showToast(`Parsed ${tempData.length} points successfully.`, "success");
+            }
+        }
+
+        // STEP 2: Transform GLOBAL_BATCH_DATA -> PROCESSED_BATCH_DATA using current Dropdowns
+        function recalculateBatch() {
+            if (GLOBAL_BATCH_DATA.length === 0) return;
+
+            // V15 Fix: Explicitly read DOM values for calculation to ensure persistence & reactivity
+            const srcCode = document.getElementById('batch-src-crs').value;
+            const tgtCode = document.getElementById('batch-tgt-crs').value;
+            const decimals = tgtCode === 'EPSG:4326' ? 7 : 3;
+
+            // Debugging Logger
+            console.log('Recalculating from', srcCode, 'to', tgtCode);
+
+            PROCESSED_BATCH_DATA = []; // Clear output
+
+            GLOBAL_BATCH_DATA.forEach(pt => {
+                let resPt = { ...pt }; // copy ID and original X/Y
+                
+                try {
+                    let inputCoords = [pt.x, pt.y];
+                    
+                    // 1. Calculate WGS84 Equivalent for DMS (Vis only)
+                    // V15 Fix: Use srcCode from dropdown (Single Source of Truth), do not bypass even if isKML.
+                    let wgsPt = proj4(srcCode, 'EPSG:4326', inputCoords);
+                    
+                    resPt.dmsLon = toDMS(wgsPt[0], false);
+                    resPt.dmsLat = toDMS(wgsPt[1], true);
+
+                    // 2. Calculate Target Coordinates
+                    // V15 Fix: Use srcCode from dropdown, do not bypass even if isKML.
+                    let result = proj4(srcCode, tgtCode, inputCoords);
+                    
+                    resPt.resX = result[0].toFixed(decimals);
+                    resPt.resY = result[1].toFixed(decimals);
+                } catch (e) {
+                    resPt.resX = 'Error'; resPt.resY = 'Error';
+                    resPt.dmsLat = '-'; resPt.dmsLon = '-';
+                }
+                PROCESSED_BATCH_DATA.push(resPt);
+            });
+
+            renderBatchResults();
+        }
+
+        function toDMS(coordinate, isLat) {
+            const absolute = Math.abs(coordinate);
+            const degrees = Math.floor(absolute);
+            const minutesNotTruncated = (absolute - degrees) * 60;
+            const minutes = Math.floor(minutesNotTruncated);
+            const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(2);
+            const direction = isLat ? (coordinate >= 0 ? "N" : "S") : (coordinate >= 0 ? "E" : "W");
+            return `${degrees}° ${minutes}' ${seconds}" ${direction}`;
+        }
+
+        function parseKML(xmlStr) {
+            const parsed = [];
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+            const placemarks = xmlDoc.getElementsByTagName("Placemark");
+            
+            for (let i = 0; i < placemarks.length; i++) {
+                const nameTag = placemarks[i].getElementsByTagName("name")[0];
+                const coordsTag = placemarks[i].getElementsByTagName("coordinates")[0];
+                
+                if (coordsTag) {
+                    const rawCoord = coordsTag.textContent.trim();
+                    const parts = rawCoord.split(',');
+                    if (parts.length >= 2) {
+                        parsed.push({
+                            id: nameTag ? nameTag.textContent : `KML-${i+1}`,
+                            x: parseFloat(parts[0]), // Lon
+                            y: parseFloat(parts[1]), // Lat
+                            isKML: true
+                        });
+                    }
+                }
+            }
+            return parsed;
+        }
+
+        function parseTextOrNCN(text) {
+            const parsed = [];
+            const lines = text.split(/\r?\n/);
+            let pointCount = 1;
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                const parts = line.replace(/,/g, ' ').replace(/\s+/g, ' ').split(' ');
+                
+                let id = `P${pointCount}`;
+                let x = null, y = null;
+
+                // Format: ID X Y
+                if (parts.length >= 3 && !isNaN(parts[1]) && !isNaN(parts[2])) {
+                    id = parts[0]; x = parseFloat(parts[1]); y = parseFloat(parts[2]); 
+                } 
+                // Format: X Y
+                else if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                    x = parseFloat(parts[0]); y = parseFloat(parts[1]);
+                }
+
+                if (x !== null && y !== null) {
+                    parsed.push({ id, x, y, isKML: false });
+                    pointCount++;
+                }
+            });
+            return parsed;
+        }
+
+        function renderBatchResults() {
+            const tbody = document.getElementById('batch-results-body');
+            document.getElementById('result-count').innerText = PROCESSED_BATCH_DATA.length;
+            
+            if (PROCESSED_BATCH_DATA.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No valid data found.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            PROCESSED_BATCH_DATA.forEach(pt => {
+                html += `<tr>
+                    <td>${pt.id}</td>
+                    <td>${pt.x}</td>
+                    <td>${pt.y}</td>
+                    <td class="text-muted" style="border-left: 2px solid #dee2e6;">${pt.dmsLat}</td>
+                    <td class="text-muted" style="border-right: 2px solid #dee2e6;">${pt.dmsLon}</td>
+                    <td class="table-primary">${pt.resX}</td>
+                    <td class="table-primary">${pt.resY}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // --- 5. EXPORT ---
+        function exportData(type) {
+            if (PROCESSED_BATCH_DATA.length === 0) return alert("No data to export");
+            
+            let content = "";
+            let filename = "export";
+            
+            if (type === 'csv') {
+                content = "ID,SourceX,SourceY,TargetX,TargetY\n";
+                PROCESSED_BATCH_DATA.forEach(pt => {
+                    content += `${pt.id},${pt.x},${pt.y},${pt.resX},${pt.resY}\n`;
+                });
+                filename += ".csv";
+                downloadFile(content, filename, 'text/csv');
+            } else if (type === 'kml') {
+                content = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>OpenGIS Export</name>`;
+                
+                const tgtCode = document.getElementById('batch-tgt-crs').value;
+                
+                PROCESSED_BATCH_DATA.forEach(pt => {
+                    if (pt.resX === 'Error') return;
+                    try {
+                        const wgs = proj4(tgtCode, 'EPSG:4326', [parseFloat(pt.resX), parseFloat(pt.resY)]);
+                        content += `
+    <Placemark>
+      <name>${pt.id}</name>
+      <Point>
+        <coordinates>${wgs[0]},${wgs[1]},0</coordinates>
+      </Point>
+    </Placemark>`;
+                    } catch(e) {}
+                });
+                
+                content += `
+  </Document>
+</kml>`;
+                filename += ".kml";
+                downloadFile(content, filename, 'application/vnd.google-earth.kml+xml');
+            }
+        }
+
+        function downloadFile(content, filename, mime) {
+            const blob = new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // --- 6. CUSTOM PARAMETERS ---
+        const modal = new bootstrap.Modal(document.getElementById('paramModal'));
+
+        window.openParamModal = function(type) { // Global scope for HTML onclick
+            let selectId;
+            if (type === 'src') selectId = 'src-crs';
+            else if (type === 'tgt') selectId = 'tgt-crs';
+            else if (type === 'batch-src') selectId = 'batch-src-crs';
+            else if (type === 'batch-tgt') selectId = 'batch-tgt-crs';
+
+            const code = document.getElementById(selectId).value;
+            const def = CRS_DEFINITIONS.find(c => c.code === code);
+            
+            if (def) {
+                document.getElementById('modal-crs-name').innerText = def.name;
+                document.getElementById('modal-crs-code').value = def.code;
+                document.getElementById('modal-proj4-string').value = def.proj4;
+                activeModalCrsCode = def.code;
+                modal.show();
+            }
+        }
+
+        window.saveParameters = function() {
+            const code = activeModalCrsCode;
+            const newProj4 = document.getElementById('modal-proj4-string').value;
+            
+            const defIndex = CRS_DEFINITIONS.findIndex(c => c.code === code);
+            if (defIndex > -1) {
+                CRS_DEFINITIONS[defIndex].proj4 = newProj4;
+                proj4.defs(code, newProj4);
+                modal.hide();
+                calculate();
+                if(GLOBAL_BATCH_DATA.length > 0) recalculateBatch();
+                alert("Parameters updated for this session.");
+            }
+        }
+        
+        // --- 7. SEARCH (Same as before) ---
         async function handleSearch(e) {
             e.preventDefault();
             const query = document.getElementById('search-input').value;
-            const errorDiv = document.getElementById('search-error');
-            const btn = document.getElementById('search-btn');
-
             if (!query) return;
-
-            // Loading state
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
-            errorDiv.style.display = 'none';
-
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    const name = data[0].display_name;
-
-                    // 1. Move Map
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
                     map.flyTo([lat, lon], 14);
+                    L.popup().setLatLng([lat, lon]).setContent(data[0].display_name).openOn(map);
                     
-                    // 2. Show Popup
-                    L.popup()
-                        .setLatLng([lat, lon])
-                        .setContent(`<div style="text-align:center; font-size: 0.8rem;"><b>Found Location</b><br>${name}</div>`)
-                        .openOn(map);
-
-                    // 3. Convert WGS84 -> Source CRS and Fill Inputs
-                    let sourcePt;
-                    try {
-                        sourcePt = proj4('EPSG:4326', srcCode, [lon, lat]);
-                    } catch(err) { console.error(err); return; }
-
+                    const srcCode = document.getElementById('src-crs').value;
+                    const pt = proj4('EPSG:4326', srcCode, [lon, lat]);
                     const decimals = srcCode === 'EPSG:4326' ? 7 : 3;
-                    
-                    document.getElementById('src-x').value = sourcePt[0].toFixed(decimals);
-                    document.getElementById('src-y').value = sourcePt[1].toFixed(decimals);
-                    
-                    calculate(); // Trigger engine
+                    document.getElementById('src-x').value = pt[0].toFixed(decimals);
+                    document.getElementById('src-y').value = pt[1].toFixed(decimals);
+                    calculate();
                 } else {
-                    errorDiv.style.display = 'block';
+                    document.getElementById('search-error').style.display = 'block';
                 }
-            } catch (err) {
-                console.error(err);
-                errorDiv.innerText = "Network Error";
-                errorDiv.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
-            }
+            } catch (err) { console.error(err); }
         }
     </script>
 </body>
